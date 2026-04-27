@@ -1,7 +1,7 @@
 import request from "supertest";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
-import { app } from "../src/app.js";
-import { prisma } from "../src/lib/prisma.js";
+import { app } from "../../app.js";
+import { prisma } from "../../lib/prisma.js";
 
 describe("Task API", () => {
   beforeEach(async () => {

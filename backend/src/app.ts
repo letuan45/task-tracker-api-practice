@@ -1,6 +1,6 @@
 import "dotenv/config";
-import type { ErrorRequestHandler } from "express";
 import express from "express";
+import { errorHandler } from "./lib/error-handler.js";
 import { taskRoutes } from "./tasks/task.routes.js";
 
 export const app = express();
@@ -21,26 +21,5 @@ app.use((_req, res) => {
     },
   });
 });
-
-const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
-  if (error instanceof SyntaxError) {
-    res.status(400).json({
-      error: {
-        code: "INVALID_JSON",
-        message: "Request body must be valid JSON.",
-      },
-    });
-    return;
-  }
-
-  console.error(error);
-
-  res.status(500).json({
-    error: {
-      code: "INTERNAL_SERVER_ERROR",
-      message: "An unexpected error occurred.",
-    },
-  });
-};
 
 app.use(errorHandler);

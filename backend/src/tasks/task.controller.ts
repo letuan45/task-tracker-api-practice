@@ -1,89 +1,55 @@
 import type { Request, Response } from "express";
-import { AppError, badRequest } from "./task.errors.js";
 import { taskService } from "./task.service.js";
+import type { TaskRouteLocals } from "./task.types.js";
 
-const sendError = (res: Response, error: unknown) => {
-  if (error instanceof AppError) {
-    return res.status(error.statusCode).json({
-      error: {
-        code: error.code,
-        message: error.message,
-      },
-    });
+const requireLocal = <T>(value: T | undefined, name: string) => {
+  if (value === undefined) {
+    throw new Error(`Missing validated ${name}.`);
   }
 
-  console.error(error);
-
-  return res.status(500).json({
-    error: {
-      code: "INTERNAL_SERVER_ERROR",
-      message: "An unexpected error occurred.",
-    },
-  });
+  return value;
 };
 
-const idFromParams = (req: Request) => {
-  const id = req.params.id;
-
-  if (typeof id !== "string" || id.trim().length === 0) {
-    throw badRequest("Task id is required.", "INVALID_TASK_ID");
-  }
-
-  return id;
-};
+type TaskResponse = Response<unknown, TaskRouteLocals>;
 
 export const taskController = {
-  async listTasks(_req: Request, res: Response) {
-    try {
-      const tasks = await taskService.listTasks();
-      return res.status(200).json({ data: tasks });
-    } catch (error) {
-      return sendError(res, error);
-    }
+  async listTasks(_req: Request, res: TaskResponse) {
+    const tasks = await taskService.listTasks();
+    return res.status(200).json({ data: tasks });
   },
 
-  async getTask(req: Request, res: Response) {
-    try {
-      const task = await taskService.getTask(idFromParams(req));
-      return res.status(200).json({ data: task });
-    } catch (error) {
-      return sendError(res, error);
-    }
+  async getTask(_req: Request, res: TaskResponse) {
+    const task = await taskService.getTask(
+      requireLocal(res.locals.taskId, "task id"),
+    );
+    return res.status(200).json({ data: task });
   },
 
-  async createTask(req: Request, res: Response) {
-    try {
-      const task = await taskService.createTask(req.body);
-      return res.status(201).json({ data: task });
-    } catch (error) {
-      return sendError(res, error);
-    }
+  async createTask(_req: Request, res: TaskResponse) {
+    const task = await taskService.createTask(
+      requireLocal(res.locals.createTaskInput, "create task input"),
+    );
+    return res.status(201).json({ data: task });
   },
 
-  async updateTask(req: Request, res: Response) {
-    try {
-      const task = await taskService.updateTask(idFromParams(req), req.body);
-      return res.status(200).json({ data: task });
-    } catch (error) {
-      return sendError(res, error);
-    }
+  async updateTask(_req: Request, res: TaskResponse) {
+    const task = await taskService.updateTask(
+      requireLocal(res.locals.taskId, "task id"),
+      requireLocal(res.locals.updateTaskInput, "update task input"),
+    );
+    return res.status(200).json({ data: task });
   },
 
-  async deleteTask(req: Request, res: Response) {
-    try {
-      await taskService.deleteTask(idFromParams(req));
-      return res.status(204).send();
-    } catch (error) {
-      return sendError(res, error);
-    }
+  async deleteTask(_req: Request, res: TaskResponse) {
+    await taskService.deleteTask(requireLocal(res.locals.taskId, "task id"));
+    return res.status(204).send();
   },
 
-  async updateTaskStatus(req: Request, res: Response) {
-    try {
-      const task = await taskService.updateTaskStatus(idFromParams(req), req.body);
-      return res.status(200).json({ data: task });
-    } catch (error) {
-      return sendError(res, error);
-    }
+  async updateTaskStatus(_req: Request, res: TaskResponse) {
+    const task = await taskService.updateTaskStatus(
+      requireLocal(res.locals.taskId, "task id"),
+      requireLocal(res.locals.updateTaskStatusInput, "update status input"),
+    );
+    return res.status(200).json({ data: task });
   },
 };

@@ -1,7 +1,7 @@
 import { TaskStatus } from "@prisma/client";
 import { describe, expect, it } from "vitest";
-import { AppError } from "../src/tasks/task.errors.js";
-import { validateStatusTransition } from "../src/tasks/task.service.js";
+import { AppError } from "../task.errors.js";
+import { validateStatusTransition } from "../task.service.js";
 
 describe("validateStatusTransition", () => {
   it("allows TODO -> IN_PROGRESS", () => {
