@@ -26,6 +26,7 @@
 - const values must put inside const.ts file
 - Some validation check, must implement in middlewares.ts, so route can use it
 - Put some chore logic to utils.ts if needed
+- Put test logics to module, Example: task/tests/*.test.ts
 
 ## Phase 6: Frontend
 - Task list

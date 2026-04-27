@@ -1,13 +1,27 @@
 # AI Usage
 
-I used Codex CLI to scaffold the project, generate the initial Express API, create React components, and write tests.
+Use Codex for small, reviewable implementation steps. Read `AGENTS.md`, `docs/plan.md`, and the relevant source files before editing.
 
-I reviewed and corrected AI output in these areas:
-- kept status transition rules in the service layer instead of route handlers
-- removed unnecessary authentication from the practice scope
-- simplified frontend state management to local React state
+## Backend Guidance
 
-missing docker-compose.yml, I added with a prompt:
-- The AGENTS.md dint't checked carefully, I have to added
+- Keep routes focused on endpoint wiring.
+- Put request shape validation in feature middleware files.
+- Keep controllers thin and free of business rules.
+- Keep task status transition rules in `task.service.ts`.
+- Put reusable constants in `task.const.ts`.
+- Put reusable types in `task.types.ts`.
+- Put shared Express utilities in `backend/src/lib`.
 
-Prompts are stored in docs/prompts.
+## Verification
+
+After backend changes, run:
+
+- `cd backend && npm run typecheck`
+- `cd backend && npm run build`
+- `cd backend && npm run test`
+
+If a command cannot run because Docker, the database, dependencies, or sandbox permissions are unavailable, state the exact blocker.
+
+## Scope Control
+
+Do not add authentication, users, background jobs, or complex state management unless explicitly requested.
