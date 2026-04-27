@@ -7,4 +7,7 @@ I reviewed and corrected AI output in these areas:
 - removed unnecessary authentication from the practice scope
 - simplified frontend state management to local React state
 
+missing docker-compose.yml, I added with a prompt:
+- The AGENTS.md dint't checked carefully, I have to added
+
 Prompts are stored in docs/prompts.
