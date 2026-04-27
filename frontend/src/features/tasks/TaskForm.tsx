@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import type { CreateTaskInput } from "../../api/tasksApi";
+import { LoadingSpinner } from "./LoadingSpinner";
 
 type TaskFormProps = {
   disabled?: boolean;
@@ -69,11 +70,12 @@ export function TaskForm({ disabled = false, onSubmit }: TaskFormProps) {
       ) : null}
 
       <button
-        className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-400"
+        className="inline-flex items-center gap-2 rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-400"
         disabled={disabled}
         type="submit"
       >
-        Create task
+        {disabled ? <LoadingSpinner /> : null}
+        {disabled ? "Creating task..." : "Create task"}
       </button>
     </form>
   );

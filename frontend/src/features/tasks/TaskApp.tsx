@@ -6,6 +6,7 @@ import {
   type UpdateTaskInput,
   tasksApi,
 } from "../../api/tasksApi";
+import { LoadingSpinner } from "./LoadingSpinner";
 import { TaskForm } from "./TaskForm";
 import { TaskList } from "./TaskList";
 
@@ -108,9 +109,13 @@ export function TaskApp() {
 
         <section aria-label="Tasks">
           {isLoading ? (
-            <p className="rounded border border-slate-200 bg-white p-4 text-sm text-slate-600">
-              Loading tasks...
-            </p>
+            <div
+              className="flex items-center gap-3 rounded border border-slate-200 bg-white p-4 text-sm text-slate-600"
+              role="status"
+            >
+              <LoadingSpinner className="text-slate-500" />
+              <span>Loading tasks...</span>
+            </div>
           ) : (
             <TaskList
               busyTaskId={busyTaskId}

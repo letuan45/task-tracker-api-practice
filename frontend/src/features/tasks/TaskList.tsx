@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import type { Task, TaskStatus, UpdateTaskInput } from "../../api/tasksApi";
+import { LoadingSpinner } from "./LoadingSpinner";
 import { TaskStatusBadge } from "./TaskStatusBadge";
 
 type TaskListProps = {
@@ -53,7 +54,7 @@ export function TaskList({
     <div className="space-y-3">
       {tasks.map((task) => (
         <TaskListItem
-          busy={busyTaskId === task.id}
+          isBusy={busyTaskId === task.id}
           key={task.id}
           onDeleteTask={onDeleteTask}
           onMoveStatus={onMoveStatus}
@@ -66,13 +67,13 @@ export function TaskList({
 }
 
 function TaskListItem({
-  busy,
+  isBusy,
   task,
   onDeleteTask,
   onMoveStatus,
   onUpdateTask,
 }: {
-  busy: boolean;
+  isBusy: boolean;
   task: Task;
   onDeleteTask: TaskListProps["onDeleteTask"];
   onMoveStatus: TaskListProps["onMoveStatus"];
@@ -84,7 +85,7 @@ function TaskListItem({
   const [validationError, setValidationError] = useState("");
   const status = nextStatus(task.status);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmitUpdateTask = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!title.trim() || !description.trim()) {
@@ -104,19 +105,19 @@ function TaskListItem({
     return (
       <form
         className="space-y-3 rounded border border-slate-200 bg-white p-4"
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmitUpdateTask}
       >
         <input
           aria-label={`Edit title for ${task.title}`}
           className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-          disabled={busy}
+          disabled={isBusy}
           value={title}
           onChange={(event) => setTitle(event.target.value)}
         />
         <textarea
           aria-label={`Edit description for ${task.title}`}
           className="min-h-20 w-full rounded border border-slate-300 px-3 py-2 text-sm"
-          disabled={busy}
+          disabled={isBusy}
           value={description}
           onChange={(event) => setDescription(event.target.value)}
         />
@@ -127,15 +128,16 @@ function TaskListItem({
         ) : null}
         <div className="flex flex-wrap gap-2">
           <button
-            className="rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:bg-slate-400"
-            disabled={busy}
+            className="inline-flex items-center gap-2 rounded bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:bg-slate-400"
+            disabled={isBusy}
             type="submit"
           >
-            Save
+            {isBusy ? <LoadingSpinner /> : null}
+            {isBusy ? "Saving..." : "Save"}
           </button>
           <button
             className="rounded border border-slate-300 px-3 py-2 text-sm"
-            disabled={busy}
+            disabled={isBusy}
             onClick={() => setIsEditing(false)}
             type="button"
           >
@@ -153,6 +155,15 @@ function TaskListItem({
           <div className="mb-2 flex flex-wrap items-center gap-2">
             <h2 className="text-base font-semibold text-slate-900">{task.title}</h2>
             <TaskStatusBadge status={task.status} />
+            {isBusy ? (
+              <span
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500"
+                role="status"
+              >
+                <LoadingSpinner className="h-3 w-3" />
+                Updating...
+              </span>
+            ) : null}
           </div>
           <p className="text-sm text-slate-600">{task.description}</p>
         </div>
@@ -160,7 +171,7 @@ function TaskListItem({
           {status ? (
             <button
               className="rounded border border-blue-300 px-3 py-2 text-sm text-blue-700 disabled:text-slate-400"
-              disabled={busy}
+              disabled={isBusy}
               onClick={() => onMoveStatus(task.id, status)}
               type="button"
             >
@@ -169,7 +180,7 @@ function TaskListItem({
           ) : null}
           <button
             className="rounded border border-slate-300 px-3 py-2 text-sm"
-            disabled={busy}
+            disabled={isBusy}
             onClick={() => setIsEditing(true)}
             type="button"
           >
@@ -177,7 +188,7 @@ function TaskListItem({
           </button>
           <button
             className="rounded border border-red-300 px-3 py-2 text-sm text-red-700 disabled:text-slate-400"
-            disabled={busy}
+            disabled={isBusy}
             onClick={() => onDeleteTask(task.id)}
             type="button"
           >
