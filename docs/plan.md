@@ -20,16 +20,22 @@
 
 ## Phase 4: Tests
 - Unit test task service status transitions
-- Integration test key API flow
+- Integration test key API
 
-## Phase 5: Frontend
+## Phase 5: Backend refactor
+- const values must put inside const.ts file
+- Some validation check, must implement in middlewares.ts, so route can use it
+- Put some chore logic to utils.ts if needed
+
+## Phase 6: Frontend
 - Task list
 - Create/edit form
 - Status badge
 - Delete button
 - Loading and error states
+- Add unit test for UI test cases, assumed that the is a mocked backend
 
-## Phase 6: Documentation
+## Phase 7: Documentation
 - README
 - DECISIONS
 - AI usage note
