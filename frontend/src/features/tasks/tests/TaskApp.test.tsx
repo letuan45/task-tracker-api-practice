@@ -35,6 +35,13 @@ const task = (overrides: Partial<Task> = {}): Task => ({
   ...overrides,
 });
 
+const paginated = (items: Task[], total = items.length) => ({
+  items,
+  total,
+  page: 1,
+  limit: 5,
+});
+
 function renderApp() {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -54,21 +61,23 @@ describe("TaskApp", () => {
   });
 
   it("shows loading state and renders listed tasks with status actions", async () => {
-    mockTasksApi.listTasks.mockResolvedValue([
-      task(),
-      task({
-        id: "task-2",
-        title: "Build UI",
-        description: "Create React components",
-        status: "IN_PROGRESS",
-      }),
-      task({
-        id: "task-3",
-        title: "Ship",
-        description: "Finish the practice app",
-        status: "DONE",
-      }),
-    ]);
+    mockTasksApi.listTasks.mockResolvedValue(
+      paginated([
+        task(),
+        task({
+          id: "task-2",
+          title: "Build UI",
+          description: "Create React components",
+          status: "IN_PROGRESS",
+        }),
+        task({
+          id: "task-3",
+          title: "Ship",
+          description: "Finish the practice app",
+          status: "DONE",
+        }),
+      ]),
+    );
 
     renderApp();
 
@@ -81,7 +90,7 @@ describe("TaskApp", () => {
 
   it("validates create form before calling the API", async () => {
     const user = userEvent.setup();
-    mockTasksApi.listTasks.mockResolvedValue([]);
+    mockTasksApi.listTasks.mockResolvedValue(paginated([]));
 
     renderApp();
 
@@ -96,18 +105,29 @@ describe("TaskApp", () => {
 
   it("creates, edits, moves, and deletes a task through the main UI", async () => {
     const user = userEvent.setup();
-    const createdTask = task();
-    const editedTask = task({
-      title: "Plan task API",
-      description: "Update the endpoint design",
-    });
-    const inProgressTask = task({ ...editedTask, status: "IN_PROGRESS" });
+    let store: Task[] = [];
 
-    mockTasksApi.listTasks.mockResolvedValue([]);
-    mockTasksApi.createTask.mockResolvedValue(createdTask);
-    mockTasksApi.updateTask.mockResolvedValue(editedTask);
-    mockTasksApi.updateTaskStatus.mockResolvedValue(inProgressTask);
-    mockTasksApi.deleteTask.mockResolvedValue(undefined);
+    mockTasksApi.listTasks.mockImplementation(async () =>
+      paginated(store),
+    );
+    mockTasksApi.createTask.mockImplementation(async (input) => {
+      const newTask = task({ ...input });
+      store = [newTask];
+      return newTask;
+    });
+    mockTasksApi.updateTask.mockImplementation(async (id, input) => {
+      const updated = { ...store[0], ...input };
+      store = [updated];
+      return updated;
+    });
+    mockTasksApi.updateTaskStatus.mockImplementation(async (id, status) => {
+      const updated = { ...store[0], status };
+      store = [updated];
+      return updated;
+    });
+    mockTasksApi.deleteTask.mockImplementation(async () => {
+      store = [];
+    });
 
     renderApp();
 

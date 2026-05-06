@@ -21,8 +21,17 @@ export type UpdateTaskInput = {
   description: string;
 };
 
-type ApiResponse<T> = {
-  data: T;
+export type PaginatedTasksResponse = {
+  items: Task[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
+export type ListTasksParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
 };
 
 const http = axios.create({
@@ -30,18 +39,24 @@ const http = axios.create({
 });
 
 export const tasksApi = {
-  listTasks: async () => {
-    const res = await http.get<ApiResponse<Task[]>>("/tasks");
-    return res.data.data;
+  listTasks: async (params?: ListTasksParams) => {
+    const query: Record<string, string | number> = {};
+    if (params?.page) query.page = params.page;
+    if (params?.limit) query.limit = params.limit;
+    if (params?.search) query.search = params.search;
+    const res = await http.get<PaginatedTasksResponse>("/tasks", {
+      params: query,
+    });
+    return res.data;
   },
 
   createTask: async (input: CreateTaskInput) => {
-    const res = await http.post<ApiResponse<Task>>("/tasks", input);
+    const res = await http.post<{ data: Task }>("/tasks", input);
     return res.data.data;
   },
 
   updateTask: async (id: string, input: UpdateTaskInput) => {
-    const res = await http.put<ApiResponse<Task>>(`/tasks/${id}`, input);
+    const res = await http.put<{ data: Task }>(`/tasks/${id}`, input);
     return res.data.data;
   },
 
@@ -50,7 +65,7 @@ export const tasksApi = {
   },
 
   updateTaskStatus: async (id: string, status: TaskStatus) => {
-    const res = await http.patch<ApiResponse<Task>>(`/tasks/${id}/status`, {
+    const res = await http.patch<{ data: Task }>(`/tasks/${id}/status`, {
       status,
     });
     return res.data.data;
