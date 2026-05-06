@@ -1,92 +1,54 @@
-import { useEffect, useState } from "react";
 import {
-  type CreateTaskInput,
-  type Task,
-  type TaskStatus,
-  type UpdateTaskInput,
-  tasksApi,
-} from "../../api/tasksApi";
+  useCreateTaskMutation,
+  useDeleteTaskMutation,
+  useTasksQuery,
+  useUpdateTaskMutation,
+  useUpdateTaskStatusMutation,
+} from "../../api/useTasks";
+import type { CreateTaskInput, TaskStatus, UpdateTaskInput } from "../../api/tasksApi";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { TaskForm } from "./TaskForm";
 import { TaskList } from "./TaskList";
 
+const errorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Something went wrong.";
+
 export function TaskApp() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [busyTaskId, setBusyTaskId] = useState<string>();
-  const [isCreating, setIsCreating] = useState(false);
+  const { data: tasks = [], isPending, error: listError } = useTasksQuery();
+  const createMutation = useCreateTaskMutation();
+  const updateMutation = useUpdateTaskMutation();
+  const deleteMutation = useDeleteTaskMutation();
+  const statusMutation = useUpdateTaskStatusMutation();
 
-  const loadTasks = async () => {
-    setIsLoading(true);
-    setError("");
+  const displayError =
+    listError ??
+    createMutation.error ??
+    updateMutation.error ??
+    deleteMutation.error ??
+    statusMutation.error;
 
-    try {
-      setTasks(await tasksApi.listTasks());
-    } catch (caughtError) {
-      setError(errorMessage(caughtError));
-    } finally {
-      setIsLoading(false);
-    }
+  const busyTaskId = deleteMutation.isPending
+    ? deleteMutation.variables
+    : statusMutation.isPending
+      ? statusMutation.variables?.id
+      : updateMutation.isPending
+        ? updateMutation.variables?.id
+        : undefined;
+
+  const handleCreate = async (input: CreateTaskInput) => {
+    await createMutation.mutateAsync(input);
   };
 
-  useEffect(() => {
-    void loadTasks();
-  }, []);
-
-  const createTask = async (input: CreateTaskInput) => {
-    setIsCreating(true);
-    setError("");
-
-    try {
-      const task = await tasksApi.createTask(input);
-      setTasks((currentTasks) => [task, ...currentTasks]);
-    } catch (caughtError) {
-      setError(errorMessage(caughtError));
-    } finally {
-      setIsCreating(false);
-    }
+  const handleUpdate = async (id: string, input: UpdateTaskInput) => {
+    await updateMutation.mutateAsync({ id, input });
   };
 
-  const updateTask = async (id: string, input: UpdateTaskInput) => {
-    await runTaskAction(id, async () => tasksApi.updateTask(id, input));
+  const handleUpdateStatus = async (id: string, status: TaskStatus) => {
+    await statusMutation.mutateAsync({ id, status });
   };
 
-  const updateTaskStatus = async (id: string, status: TaskStatus) => {
-    await runTaskAction(id, async () => tasksApi.updateTaskStatus(id, status));
-  };
-
-  const deleteTask = async (id: string) => {
-    setBusyTaskId(id);
-    setError("");
-
-    try {
-      await tasksApi.deleteTask(id);
-      setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id));
-    } catch (caughtError) {
-      setError(errorMessage(caughtError));
-    } finally {
-      setBusyTaskId(undefined);
-    }
-  };
-
-  const runTaskAction = async (
-    id: string,
-    action: () => Promise<Task>,
-  ) => {
-    setBusyTaskId(id);
-    setError("");
-
-    try {
-      const updatedTask = await action();
-      setTasks((currentTasks) =>
-        currentTasks.map((task) => (task.id === id ? updatedTask : task)),
-      );
-    } catch (caughtError) {
-      setError(errorMessage(caughtError));
-    } finally {
-      setBusyTaskId(undefined);
-    }
+  const handleDelete = async (id: string) => {
+    await deleteMutation.mutateAsync(id);
   };
 
   return (
@@ -95,20 +57,24 @@ export function TaskApp() {
         <header>
           <h1 className="text-2xl font-semibold">Task Tracker</h1>
           <p className="mt-1 text-sm text-slate-600">
-            Create tasks, edit details, and move work through the allowed status flow.
+            Create tasks, edit details, and move work through the allowed status
+            flow.
           </p>
         </header>
 
-        {error ? (
-          <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
-            {error}
+        {displayError ? (
+          <div
+            className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+            role="alert"
+          >
+            {errorMessage(displayError)}
           </div>
         ) : null}
 
-        <TaskForm disabled={isCreating} onSubmit={createTask} />
+        <TaskForm disabled={createMutation.isPending} onSubmit={handleCreate} />
 
         <section aria-label="Tasks">
-          {isLoading ? (
+          {isPending ? (
             <div
               className="flex items-center gap-3 rounded border border-slate-200 bg-white p-4 text-sm text-slate-600"
               role="status"
@@ -119,9 +85,9 @@ export function TaskApp() {
           ) : (
             <TaskList
               busyTaskId={busyTaskId}
-              onDeleteTask={deleteTask}
-              onMoveStatus={updateTaskStatus}
-              onUpdateTask={updateTask}
+              onDeleteTask={handleDelete}
+              onMoveStatus={handleUpdateStatus}
+              onUpdateTask={handleUpdate}
               tasks={tasks}
             />
           )}
@@ -130,6 +96,3 @@ export function TaskApp() {
     </main>
   );
 }
-
-const errorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : "Something went wrong.";

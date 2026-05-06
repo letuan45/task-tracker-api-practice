@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TaskApp } from "../TaskApp";
 import type { Task } from "../../../api/tasksApi";
@@ -34,6 +35,19 @@ const task = (overrides: Partial<Task> = {}): Task => ({
   ...overrides,
 });
 
+function renderApp() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <TaskApp />
+    </QueryClientProvider>,
+  );
+}
+
 describe("TaskApp", () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -56,7 +70,7 @@ describe("TaskApp", () => {
       }),
     ]);
 
-    render(<TaskApp />);
+    renderApp();
 
     expect(screen.getByText("Loading tasks...")).toBeInTheDocument();
     expect(await screen.findByText("Plan API")).toBeInTheDocument();
@@ -69,7 +83,7 @@ describe("TaskApp", () => {
     const user = userEvent.setup();
     mockTasksApi.listTasks.mockResolvedValue([]);
 
-    render(<TaskApp />);
+    renderApp();
 
     await screen.findByText("No tasks yet.");
     await user.click(screen.getByRole("button", { name: "Create task" }));
@@ -95,7 +109,7 @@ describe("TaskApp", () => {
     mockTasksApi.updateTaskStatus.mockResolvedValue(inProgressTask);
     mockTasksApi.deleteTask.mockResolvedValue(undefined);
 
-    render(<TaskApp />);
+    renderApp();
 
     await screen.findByText("No tasks yet.");
     await user.type(screen.getByLabelText("Title"), "Plan API");
@@ -113,7 +127,10 @@ describe("TaskApp", () => {
 
     await user.click(screen.getByRole("button", { name: "Edit" }));
     await user.clear(screen.getByLabelText("Edit title for Plan API"));
-    await user.type(screen.getByLabelText("Edit title for Plan API"), "Plan task API");
+    await user.type(
+      screen.getByLabelText("Edit title for Plan API"),
+      "Plan task API",
+    );
     await user.clear(screen.getByLabelText("Edit description for Plan API"));
     await user.type(
       screen.getByLabelText("Edit description for Plan API"),
@@ -127,7 +144,9 @@ describe("TaskApp", () => {
       description: "Update the endpoint design",
     });
 
-    await user.click(screen.getByRole("button", { name: "Move to in progress" }));
+    await user.click(
+      screen.getByRole("button", { name: "Move to in progress" }),
+    );
 
     await waitFor(() => {
       expect(mockTasksApi.updateTaskStatus).toHaveBeenCalledWith(

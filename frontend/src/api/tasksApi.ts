@@ -1,3 +1,5 @@
+import axios from "axios";
+
 export type TaskStatus = "TODO" | "IN_PROGRESS" | "DONE";
 
 export type Task = {
@@ -23,60 +25,34 @@ type ApiResponse<T> = {
   data: T;
 };
 
-type ApiErrorResponse = {
-  error?: {
-    message?: string;
-  };
-};
-
-const requestJson = async <T>(
-  path: string,
-  options: RequestInit = {},
-): Promise<T> => {
-  const response = await fetch(`/api${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-    ...options,
-  });
-
-  if (!response.ok) {
-    const body = (await response.json().catch(() => ({}))) as ApiErrorResponse;
-    throw new Error(body.error?.message ?? "Request failed.");
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  const body = (await response.json()) as ApiResponse<T>;
-  return body.data;
-};
+const http = axios.create({
+  baseURL: "/api",
+});
 
 export const tasksApi = {
-  listTasks: () => requestJson<Task[]>("/tasks"),
+  listTasks: async () => {
+    const res = await http.get<ApiResponse<Task[]>>("/tasks");
+    return res.data.data;
+  },
 
-  createTask: (input: CreateTaskInput) =>
-    requestJson<Task>("/tasks", {
-      method: "POST",
-      body: JSON.stringify(input),
-    }),
+  createTask: async (input: CreateTaskInput) => {
+    const res = await http.post<ApiResponse<Task>>("/tasks", input);
+    return res.data.data;
+  },
 
-  updateTask: (id: string, input: UpdateTaskInput) =>
-    requestJson<Task>(`/tasks/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(input),
-    }),
+  updateTask: async (id: string, input: UpdateTaskInput) => {
+    const res = await http.put<ApiResponse<Task>>(`/tasks/${id}`, input);
+    return res.data.data;
+  },
 
-  deleteTask: (id: string) =>
-    requestJson<void>(`/tasks/${id}`, {
-      method: "DELETE",
-    }),
+  deleteTask: async (id: string) => {
+    await http.delete(`/tasks/${id}`);
+  },
 
-  updateTaskStatus: (id: string, status: TaskStatus) =>
-    requestJson<Task>(`/tasks/${id}/status`, {
-      method: "PATCH",
-      body: JSON.stringify({ status }),
-    }),
+  updateTaskStatus: async (id: string, status: TaskStatus) => {
+    const res = await http.patch<ApiResponse<Task>>(`/tasks/${id}/status`, {
+      status,
+    });
+    return res.data.data;
+  },
 };
