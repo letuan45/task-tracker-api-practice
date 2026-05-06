@@ -15,8 +15,10 @@ type TaskResponse = Response<unknown, TaskRouteLocals>;
 
 export const taskController = {
   async listTasks(_req: Request, res: TaskResponse) {
-    const tasks = await taskService.listTasks();
-    return res.status(200).json({ data: tasks });
+    const result = await taskService.listTasks(
+      requireLocal(res.locals.listTasksParams, "list tasks params"),
+    );
+    return res.status(200).json(result);
   },
 
   async getTask(_req: Request, res: TaskResponse) {

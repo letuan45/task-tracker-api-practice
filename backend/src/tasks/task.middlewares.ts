@@ -1,9 +1,10 @@
 import { TaskStatus } from "@prisma/client";
 import type { RequestHandler } from "express";
 import { badRequest } from "../lib/app-error.js";
-import { TASK_ERROR_CODES, TASK_STATUSES } from "./task.const.js";
+import { PAGINATION, TASK_ERROR_CODES, TASK_STATUSES } from "./task.const.js";
 import type {
   CreateTaskInput,
+  ListTasksParams,
   TaskRouteLocals,
   UpdateTaskInput,
   UpdateTaskStatusInput,
@@ -141,5 +142,43 @@ export const validateUpdateTaskStatusBody: RequestHandler<
   };
 
   res.locals.updateTaskStatusInput = input;
+  next();
+};
+
+const parsePositiveInt = (value: unknown, field: string, fallback: number) => {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 1) {
+    throw badRequest(`${field} must be a positive integer.`);
+  }
+
+  return n;
+};
+
+export const validateListTasksQuery: RequestHandler<
+  unknown,
+  unknown,
+  unknown,
+  Record<string, unknown>,
+  TaskRouteLocals
+> = (req, res, next) => {
+  const query = req.query;
+  const page = parsePositiveInt(query.page, "page", PAGINATION.DEFAULT_PAGE);
+  const limit = parsePositiveInt(query.limit, "limit", PAGINATION.DEFAULT_LIMIT);
+
+  if (limit > PAGINATION.MAX_LIMIT) {
+    throw badRequest(`limit must not exceed ${PAGINATION.MAX_LIMIT}.`);
+  }
+
+  const search = typeof query.search === "string" && query.search.length > 0
+    ? query.search
+    : undefined;
+
+  const params: ListTasksParams = { page, limit, search };
+
+  res.locals.listTasksParams = params;
   next();
 };

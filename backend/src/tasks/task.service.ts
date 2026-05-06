@@ -4,6 +4,7 @@ import { badRequest, conflict, notFound } from "../lib/app-error.js";
 import { TASK_ERROR_CODES } from "./task.const.js";
 import type {
   CreateTaskInput,
+  ListTasksParams,
   UpdateTaskInput,
   UpdateTaskStatusInput,
 } from "./task.types.js";
@@ -42,10 +43,26 @@ const findTaskOrThrow = async (id: string) => {
 };
 
 export const taskService = {
-  listTasks: () =>
-    prisma.task.findMany({
-      orderBy: { createdAt: "desc" },
-    }),
+  async listTasks(params: ListTasksParams) {
+    const { page, limit, search } = params;
+    const skip = (page - 1) * limit;
+
+    const where = search
+      ? { title: { contains: search, mode: "insensitive" as const } }
+      : {};
+
+    const [items, total] = await Promise.all([
+      prisma.task.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.task.count({ where }),
+    ]);
+
+    return { items, total, page, limit };
+  },
 
   getTask: (id: string) => findTaskOrThrow(id),
 

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { taskController } from "./task.controller.js";
 import {
   validateCreateTaskBody,
+  validateListTasksQuery,
   validateTaskId,
   validateUpdateTaskBody,
   validateUpdateTaskStatusBody,
@@ -9,7 +10,7 @@ import {
 
 export const taskRoutes = Router();
 
-taskRoutes.get("/", taskController.listTasks);
+taskRoutes.get("/", validateListTasksQuery, taskController.listTasks);
 taskRoutes.get("/:id", validateTaskId, taskController.getTask);
 taskRoutes.post("/", validateCreateTaskBody, taskController.createTask);
 taskRoutes.put("/:id", validateTaskId, validateUpdateTaskBody, taskController.updateTask);

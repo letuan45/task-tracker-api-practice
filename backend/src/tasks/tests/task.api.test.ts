@@ -53,12 +53,11 @@ describe("Task API", () => {
 
     const listResponse = await request(app).get("/tasks").expect(200);
 
-    expect(listResponse.body.data).toHaveLength(1);
-    expect(listResponse.body.data[0]).toMatchObject({
-      id: taskId,
-      title: "Write tests",
-      description: "Cover the main task API flow",
-      status: "DONE",
+    expect(listResponse.body).toMatchObject({
+      items: [expect.objectContaining({ id: taskId, status: "DONE" })],
+      total: 1,
+      page: 1,
+      limit: 5,
     });
   });
 });
