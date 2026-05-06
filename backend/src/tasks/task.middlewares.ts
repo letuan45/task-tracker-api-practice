@@ -1,6 +1,6 @@
 import { TaskStatus } from "@prisma/client";
 import type { RequestHandler } from "express";
-import { badRequest } from "./task.errors.js";
+import { badRequest } from "../lib/app-error.js";
 import { TASK_ERROR_CODES, TASK_STATUSES } from "./task.const.js";
 import type {
   CreateTaskInput,
@@ -87,21 +87,17 @@ export const validateCreateTaskBody: RequestHandler<
   unknown,
   TaskRouteLocals
 > = (req, res, next) => {
-  try {
-    const body = requireBody(req.body);
-    const status = optionalTaskStatus(body.status) ?? TaskStatus.TODO;
+  const body = requireBody(req.body);
+  const status = optionalTaskStatus(body.status) ?? TaskStatus.TODO;
 
-    const input: CreateTaskInput = {
-      title: requireNonEmptyString(body.title, "title"),
-      description: requireNonEmptyString(body.description, "description"),
-      status,
-    };
+  const input: CreateTaskInput = {
+    title: requireNonEmptyString(body.title, "title"),
+    description: requireNonEmptyString(body.description, "description"),
+    status,
+  };
 
-    res.locals.createTaskInput = input;
-    next();
-  } catch (error) {
-    next(error);
-  }
+  res.locals.createTaskInput = input;
+  next();
 };
 
 export const validateUpdateTaskBody: RequestHandler<
@@ -111,29 +107,25 @@ export const validateUpdateTaskBody: RequestHandler<
   unknown,
   TaskRouteLocals
 > = (req, res, next) => {
-  try {
-    const body = requireBody(req.body);
-    const input: UpdateTaskInput = {
-      title: optionalNonEmptyString(body.title, "title"),
-      description: optionalNonEmptyString(body.description, "description"),
-      status: optionalTaskStatus(body.status),
-    };
+  const body = requireBody(req.body);
+  const input: UpdateTaskInput = {
+    title: optionalNonEmptyString(body.title, "title"),
+    description: optionalNonEmptyString(body.description, "description"),
+    status: optionalTaskStatus(body.status),
+  };
 
-    if (
-      input.title === undefined &&
-      input.description === undefined &&
-      input.status === undefined
-    ) {
-      throw badRequest(
-        "At least one of title, description, or status must be provided.",
-      );
-    }
-
-    res.locals.updateTaskInput = input;
-    next();
-  } catch (error) {
-    next(error);
+  if (
+    input.title === undefined &&
+    input.description === undefined &&
+    input.status === undefined
+  ) {
+    throw badRequest(
+      "At least one of title, description, or status must be provided.",
+    );
   }
+
+  res.locals.updateTaskInput = input;
+  next();
 };
 
 export const validateUpdateTaskStatusBody: RequestHandler<
@@ -143,15 +135,11 @@ export const validateUpdateTaskStatusBody: RequestHandler<
   unknown,
   TaskRouteLocals
 > = (req, res, next) => {
-  try {
-    const body = requireBody(req.body);
-    const input: UpdateTaskStatusInput = {
-      status: requireTaskStatus(body.status),
-    };
+  const body = requireBody(req.body);
+  const input: UpdateTaskStatusInput = {
+    status: requireTaskStatus(body.status),
+  };
 
-    res.locals.updateTaskStatusInput = input;
-    next();
-  } catch (error) {
-    next(error);
-  }
+  res.locals.updateTaskStatusInput = input;
+  next();
 };

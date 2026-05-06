@@ -1,6 +1,6 @@
 import { TaskStatus } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
-import { badRequest, conflict, notFound } from "./task.errors.js";
+import { badRequest, conflict, notFound } from "../lib/app-error.js";
 import { TASK_ERROR_CODES } from "./task.const.js";
 import type {
   CreateTaskInput,

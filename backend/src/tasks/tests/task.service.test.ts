@@ -1,6 +1,6 @@
 import { TaskStatus } from "@prisma/client";
 import { describe, expect, it } from "vitest";
-import { AppError } from "../task.errors.js";
+import { AppError } from "../../lib/app-error.js";
 import { validateStatusTransition } from "../task.service.js";
 
 describe("validateStatusTransition", () => {

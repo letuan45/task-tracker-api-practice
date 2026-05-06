@@ -1,10 +1,11 @@
 import type { Request, Response } from "express";
 import { taskService } from "./task.service.js";
+import { AppError } from "../lib/app-error.js";
 import type { TaskRouteLocals } from "./task.types.js";
 
 const requireLocal = <T>(value: T | undefined, name: string) => {
   if (value === undefined) {
-    throw new Error(`Missing validated ${name}.`);
+    throw new AppError(500, "INTERNAL_ERROR", `Missing validated ${name}.`);
   }
 
   return value;
